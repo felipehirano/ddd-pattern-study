@@ -1,3 +1,9 @@
+import CustomerChangeAddressEvent from "../customer/customer-change-address.event";
+import CustomerCreatedEvent from "../customer/customer-created.event";
+import SendEmailWhenCustomerIsCreatedHandler from "../customer/handler/send-email-when-customer-is-created.handler";
+import sendEmailWhenCustomerIsCreatedHandler from "../customer/handler/send-email-when-customer-is-created.handler";
+import SendEmailWhenCustomerIsCreatedHandler2 from "../customer/handler/send-email-when-customer-is-created.handler2";
+import SendEmailWhenCustomerChangeAddressHandler from "../customer/handler/send-email-when-cutomer-change-address-handler";
 import sendEmailWhenProductIsCreatedHandler from "../product/handler/send-email-when-product-is-created.handler";
 import ProductCreatedEvent from "../product/product-created.event";
 import EventDispatcher from "./event-dispatcher";
@@ -95,6 +101,93 @@ describe("Domain Events Tests", () => {
 
     // Quando o notify for executado o SendEmailWhenProductIsCreatedHandler.handle() deve ser chamado
     eventDispatcher.notify(productCreatedEvent);
+    expect(spyEventHandler).toHaveBeenCalled();
+  });
+
+  it("should register a new customer event handler", () => {
+    const eventDispatcher = new EventDispatcher();
+    const eventHandler = new sendEmailWhenCustomerIsCreatedHandler();
+
+    eventDispatcher.register("CustomerCreatedEvent", eventHandler);
+
+    expect(
+      eventDispatcher.getEventHandlers["CustomerCreatedEvent"]
+    ).toBeDefined();
+
+    expect(
+      eventDispatcher.getEventHandlers["CustomerCreatedEvent"].length
+    ).toBe(1);
+
+    expect(
+      eventDispatcher.getEventHandlers["CustomerCreatedEvent"][0]
+    ).toMatchObject(eventHandler);
+  });
+
+  it("should notify when new customer is created", () => {
+    const eventDispatcher = new EventDispatcher();
+    const eventHandler = new SendEmailWhenCustomerIsCreatedHandler();
+    const spyEventHandler = jest.spyOn(eventHandler, "handle");
+
+    eventDispatcher.register("CustomerCreatedEvent", eventHandler);
+
+    expect(
+      eventDispatcher.getEventHandlers["CustomerCreatedEvent"][0]
+    ).toMatchObject(eventHandler);
+
+    const customerCreatedEvent = new CustomerCreatedEvent({
+      id: "c1",
+      name: "Customer 1",
+    });
+
+    eventDispatcher.notify(customerCreatedEvent);
+    expect(spyEventHandler).toHaveBeenCalled();
+  });
+
+  it("should notify when new customer is created", () => {
+    const eventDispatcher = new EventDispatcher();
+    const eventHandler = new SendEmailWhenCustomerIsCreatedHandler2();
+    const spyEventHandler = jest.spyOn(eventHandler, "handle");
+
+    eventDispatcher.register("CustomerCreatedEvent", eventHandler);
+
+    expect(
+      eventDispatcher.getEventHandlers["CustomerCreatedEvent"][0]
+    ).toMatchObject(eventHandler);
+
+    const customerCreatedEvent = new CustomerCreatedEvent({
+      id: "c1",
+      name: "Customer 1",
+    });
+
+    eventDispatcher.notify(customerCreatedEvent);
+    expect(spyEventHandler).toHaveBeenCalled();
+  });
+
+  it("should notify when customer change his address", () => {
+    const eventDispatcher = new EventDispatcher();
+    const eventHandler = new SendEmailWhenCustomerChangeAddressHandler();
+    const spyEventHandler = jest.spyOn(eventHandler, "handle");
+
+    eventDispatcher.register("CustomerChangeAddressEvent", eventHandler);
+
+    expect(
+      eventDispatcher.getEventHandlers["CustomerChangeAddressEvent"][0]
+    ).toBeDefined();
+
+    expect(
+      eventDispatcher.getEventHandlers["CustomerChangeAddressEvent"][0]
+    ).toMatchObject(eventHandler);
+
+    const customerChangeAddress = new CustomerChangeAddressEvent({
+      id: "c1",
+      name: "Customer 1",
+      street: "Augusto dos Santos",
+      number: 51,
+      zip: "7077",
+      city: "Santos",
+    });
+
+    eventDispatcher.notify(customerChangeAddress);
     expect(spyEventHandler).toHaveBeenCalled();
   });
 });
