@@ -31,7 +31,7 @@ export default class OrderRepository
     const sequelize = OrderModel.sequelize;
     await sequelize.transaction(async (t) => {
       await OrderItemModel.destroy({
-        where: { order_id: entity.id },
+        where: { id: entity.id },
         transaction: t,
       });
       const items = entity.items.map((item) => ({

@@ -81,6 +81,93 @@ describe("Order Repository Unit Tests", () => {
     });
   });
 
+  it("should update an order", async () => {
+    const customerRepository = new CustomerRepository();
+    const customer = new Customer("c1", "customer 1");
+
+    const address = new AddressValueObject("Rua 15", 105, "70277", "Brasilia");
+    customer.changeAddress(address);
+
+    await customerRepository.create(customer);
+
+    const productRepository = new ProductRepository();
+    const product = new Product("p1", "product 1", 10);
+
+    await productRepository.create(product);
+
+    const orderItem = new OrderItem(
+      "1",
+      product.name,
+      product.price,
+      product.id,
+      2
+    );
+
+    let order = new Order("o1", "c1", [orderItem]);
+
+    let orderRepository = new OrderRepository();
+    await orderRepository.create(order);
+
+    let orderModel = await OrderModel.findOne({
+      where: { id: order.id },
+      include: ["items"],
+    });
+
+    expect(orderModel.toJSON()).toStrictEqual({
+      id: "o1",
+      customer_id: "c1",
+      total: order.total(),
+      items: [
+        {
+          id: orderItem.id,
+          name: orderItem.name,
+          price: orderItem.price,
+          quantity: orderItem.quantity,
+          order_id: "o1",
+          product_id: "p1",
+          total: 20,
+        },
+      ],
+    });
+
+    const orderItem2 = new OrderItem("2", "order 2", 10, "p2", 2);
+
+    order = new Order("o1", "c1", [orderItem, orderItem2]);
+
+    await orderRepository.update(order);
+
+    orderModel = await OrderModel.findOne({
+      where: { id: order.id },
+      include: ["items"],
+    });
+
+    expect(orderModel.toJSON()).toStrictEqual({
+      id: "o1",
+      customer_id: "c1",
+      total: order.total(),
+      items: [
+        {
+          id: orderItem.id,
+          name: orderItem.name,
+          price: orderItem.price,
+          quantity: orderItem.quantity,
+          order_id: "o1",
+          product_id: "p1",
+          total: 20,
+        },
+        {
+          id: orderItem.id,
+          name: orderItem.name,
+          price: orderItem.price,
+          quantity: orderItem.quantity,
+          order_id: "o1",
+          product_id: "p1",
+          total: 20,
+        },
+      ],
+    });
+  });
+
   afterEach(async () => {
     await sequelize.close();
   });
