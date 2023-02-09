@@ -28,27 +28,34 @@ export default class OrderRepository
   }
 
   async update(entity: Order): Promise<void> {
-    const sequelize = OrderModel.sequelize;
-    await sequelize.transaction(async (t) => {
-      await OrderItemModel.destroy({
-        where: { id: entity.id },
-        transaction: t,
+    try {
+      let sequelize = OrderModel.sequelize;
+      await sequelize.transaction(async (t) => {
+        await OrderItemModel.destroy({
+          where: { order_id: entity.id },
+          transaction: t,
+        });
+        const items = entity.items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          product_id: item.productId,
+          quantity: item.quantity,
+          order_id: entity.id,
+          total: entity.total(),
+        }));
+        await OrderItemModel.bulkCreate(items, { transaction: t });
+        await OrderModel.update(
+          { total: entity.total() },
+          { where: { id: entity.id }, transaction: t }
+        );
       });
-      const items = entity.items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        product_id: item.productId,
-        quantity: item.quantity,
-        order_id: entity.id,
-      }));
-      await OrderItemModel.bulkCreate(items, { transaction: t });
-      await OrderModel.update(
-        { total: entity.total() },
-        { where: { id: entity.id }, transaction: t }
-      );
-    });
+    } catch (error) {
+      console.log(error);
+      throw new Error("Failed to update order");
+    }
   }
+
   find(ind: string): Promise<Order> {
     throw new Error("Method not implemented.");
   }

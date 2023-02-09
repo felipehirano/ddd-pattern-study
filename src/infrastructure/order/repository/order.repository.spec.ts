@@ -91,7 +91,7 @@ describe("Order Repository Unit Tests", () => {
     await customerRepository.create(customer);
 
     const productRepository = new ProductRepository();
-    const product = new Product("p1", "product 1", 10);
+    let product = new Product("p1", "product 1", 10);
 
     await productRepository.create(product);
 
@@ -103,12 +103,21 @@ describe("Order Repository Unit Tests", () => {
       2
     );
 
-    let order = new Order("o1", "c1", [orderItem]);
+    const orderItem2 = new OrderItem(
+      "2",
+      product.name,
+      product.price,
+      product.id,
+      2
+    );
 
-    let orderRepository = new OrderRepository();
+    const order = new Order("o1", "c1", [orderItem]);
+    const order2 = new Order("o1", "c1", [orderItem2]);
+
+    const orderRepository = new OrderRepository();
     await orderRepository.create(order);
 
-    let orderModel = await OrderModel.findOne({
+    const orderModel = await OrderModel.findOne({
       where: { id: order.id },
       include: ["items"],
     });
@@ -130,36 +139,23 @@ describe("Order Repository Unit Tests", () => {
       ],
     });
 
-    const orderItem2 = new OrderItem("2", "order 2", 10, "p2", 2);
+    await orderRepository.update(order2);
 
-    order = new Order("o1", "c1", [orderItem, orderItem2]);
-
-    await orderRepository.update(order);
-
-    orderModel = await OrderModel.findOne({
-      where: { id: order.id },
+    const orderModel2 = await OrderModel.findOne({
+      where: { id: order2.id },
       include: ["items"],
     });
 
-    expect(orderModel.toJSON()).toStrictEqual({
+    expect(orderModel2.toJSON()).toStrictEqual({
       id: "o1",
       customer_id: "c1",
-      total: order.total(),
+      total: order2.total(),
       items: [
         {
-          id: orderItem.id,
-          name: orderItem.name,
-          price: orderItem.price,
-          quantity: orderItem.quantity,
-          order_id: "o1",
-          product_id: "p1",
-          total: 20,
-        },
-        {
-          id: orderItem.id,
-          name: orderItem.name,
-          price: orderItem.price,
-          quantity: orderItem.quantity,
+          id: orderItem2.id,
+          name: orderItem2.name,
+          price: orderItem2.price,
+          quantity: orderItem2.quantity,
           order_id: "o1",
           product_id: "p1",
           total: 20,
